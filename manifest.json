@@ -1,10 +1,10 @@
 {
-  "id": "/",
+  "id": "/pacman/",
   "name": "PAC-MAN",
   "short_name": "PAC-MAN",
   "description": "Pac-Man Arcade Classic – Browser Game",
-  "start_url": "/index.html",
-  "scope": "/",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "fullscreen",
   "orientation": "portrait",
   "background_color": "#050510",
