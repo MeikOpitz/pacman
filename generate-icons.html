@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html><body>
+<script>
+function makeIcon(size) {
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const ctx = c.getContext('2d');
+  // Background
+  ctx.fillStyle = '#050510';
+  ctx.fillRect(0, 0, size, size);
+  // Pac-Man
+  const cx = size / 2, cy = size / 2, r = size * 0.38;
+  const grad = ctx.createRadialGradient(cx - r*0.3, cy - r*0.3, 1, cx, cy, r);
+  grad.addColorStop(0, '#ffe566');
+  grad.addColorStop(1, '#f0a800');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.arc(cx, cy, r, 0.35, Math.PI * 2 - 0.35);
+  ctx.closePath();
+  ctx.fill();
+  // Eye
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(cx + r*0.1, cy - r*0.5, r*0.1, 0, Math.PI*2);
+  ctx.fill();
+  return c;
+}
+for (const s of [192, 512]) {
+  const c = makeIcon(s);
+  const a = document.createElement('a');
+  a.download = 'icon-' + s + '.png';
+  a.href = c.toDataURL('image/png');
+  a.textContent = 'Download icon-' + s + '.png';
+  a.click();
+  document.body.appendChild(a);
+  document.body.appendChild(document.createElement('br'));
+}
+</script>
+</body></html>

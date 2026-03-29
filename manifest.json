@@ -1,0 +1,22 @@
+{
+  "id": "/",
+  "name": "PAC-MAN",
+  "short_name": "PAC-MAN",
+  "description": "Pac-Man Arcade Classic – Browser Game",
+  "start_url": "/index.html",
+  "scope": "/",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#050510",
+  "theme_color": "#050510",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "screenshots": [
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "form_factor": "narrow", "label": "PAC-MAN Gameplay" }
+  ]
+}

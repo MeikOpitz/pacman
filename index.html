@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <title>PAC-MAN</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#050510">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="icon" href="icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: radial-gradient(ellipse at center, #1a1a3a 0%, #050510 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100dvh;
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    #game-wrap {
+      display: flex;
+      flex-direction: row;
+      align-items: stretch;
+      gap: 0;
+    }
+
+    #game-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ── Side Panels ─────────────────────────────────────── */
+    .side-panel {
+      width: 160px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      padding: 18px 14px;
+      font-family: 'Orbitron', sans-serif;
+      color: #6677cc;
+      user-select: none;
+    }
+    .side-panel .panel-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+    .side-panel .panel-value {
+      font-size: 22px;
+      font-weight: 900;
+      margin-bottom: 20px;
+    }
+
+    #panel-left .panel-value { color: #ffffff; }
+
+    #panel-right .hi-label { color: #cc8800; }
+    #panel-right .hi-value {
+      color: #ffdd44;
+      text-shadow: 0 0 12px #ffaa00, 0 0 24px #ff880066;
+    }
+    #panel-right .lvl-value { color: #aaddff; }
+
+    #lives-display {
+      display: flex;
+      gap: 5px;
+      margin-top: 6px;
+    }
+    #lives-display .life-dot {
+      width: 14px;
+      height: 14px;
+      background: radial-gradient(circle at 35% 35%, #ffe566, #f0a800);
+      border-radius: 50%;
+      clip-path: polygon(50% 50%, 95% 15%, 100% 50%, 95% 85%, 50% 50%, 0% 0%, 0% 100%);
+    }
+
+    @media (max-width: 820px) {
+      .side-panel { display: none; }
+    }
+
+    canvas {
+      display: block;
+      width:  min(448px, 95vw);
+      height: min(576px, calc(95vw * 576 / 448));
+      border: 1px solid #2244aa;
+      box-shadow: 0 0 40px #1133aa, 0 0 80px #0a1a55;
+      touch-action: none;
+    }
+
+    /* ── Audio Controls ───────────────────────────────────── */
+    #audio-controls {
+      position: fixed;
+      bottom: 14px;
+      right: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(5, 5, 20, 0.88);
+      border: 1px solid #2244aa;
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 11px;
+      color: #6677cc;
+      backdrop-filter: blur(4px);
+      z-index: 10;
+    }
+
+    #mute-btn, #fs-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      padding: 0;
+      transition: opacity 0.15s;
+    }
+    #fs-btn {
+      font-size: 11px;
+      font-weight: 700;
+      color: #6677cc;
+      letter-spacing: -1px;
+    }
+    #mute-btn:hover, #fs-btn:hover { opacity: 0.7; }
+
+    #vol-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 80px;
+      height: 4px;
+      border-radius: 2px;
+      background: #2244aa;
+      outline: none;
+      cursor: pointer;
+    }
+    #vol-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: #6677cc;
+      cursor: pointer;
+    }
+    #vol-slider::-moz-range-thumb {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: #6677cc;
+      cursor: pointer;
+      border: none;
+    }
+
+    /* ── D-Pad (nur Touch-Geräte) ─────────────────────────── */
+    /* ── Pause Button ─────────────────────────────────────── */
+    #pause-btn {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 32px;
+      height: 32px;
+      background: rgba(10, 20, 80, 0.70);
+      border: 1px solid #2244aa;
+      border-radius: 8px;
+      color: #7788dd;
+      font-size: 14px;
+      line-height: 1;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      touch-action: none;
+      z-index: 5;
+      transition: background 0.1s;
+    }
+    #pause-btn:active { background: rgba(34, 68, 170, 0.55); color: #fff; }
+    @media (pointer: coarse) {
+      #pause-btn { display: flex; }
+    }
+
+    #dpad {
+      display: none;
+      margin-top: 20px;
+      width: 192px;
+      height: 192px;
+      grid-template-areas:
+        ".    up   ."
+        "left mid  right"
+        ".    down .";
+      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-rows:    1fr 1fr 1fr;
+      gap: 6px;
+    }
+
+    @media (pointer: coarse) {
+      #dpad { display: grid; }
+    }
+
+    #dpad-up    { grid-area: up; }
+    #dpad-left  { grid-area: left; }
+    #dpad-mid   { grid-area: mid; background: rgba(10,15,50,0.6); border-radius: 10px; }
+    #dpad-right { grid-area: right; }
+    #dpad-down  { grid-area: down; }
+
+    #dpad button {
+      background: rgba(10, 20, 80, 0.80);
+      border: 1px solid #2244aa;
+      border-radius: 10px;
+      color: #7788dd;
+      font-size: 26px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      touch-action: none;
+      transition: background 0.08s, color 0.08s;
+    }
+
+    #dpad button:active,
+    #dpad button.pressed {
+      background: rgba(34, 68, 170, 0.55);
+      color: #ffffff;
+      border-color: #4466cc;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-wrap">
+    <div id="panel-left" class="side-panel">
+      <div class="panel-label">1UP</div>
+      <div class="panel-value" id="side-score">000000</div>
+      <div class="panel-label">LEVEL</div>
+      <div class="panel-value lvl-value" id="side-level">1</div>
+      <div class="panel-label">LEBEN</div>
+      <div id="lives-display"></div>
+    </div>
+
+    <div id="game-center" style="position:relative;">
+      <canvas id="screen" width="896" height="1152"></canvas>
+      <button id="pause-btn" title="Pause">❚❚</button>
+
+      <div id="dpad">
+        <button id="dpad-up">▲</button>
+        <button id="dpad-left">◀</button>
+        <div id="dpad-mid"></div>
+        <button id="dpad-right">▶</button>
+        <button id="dpad-down">▼</button>
+      </div>
+    </div>
+
+    <div id="panel-right" class="side-panel">
+      <div class="panel-label hi-label">HI-SCORE</div>
+      <div class="panel-value hi-value" id="side-hiscore">000000</div>
+    </div>
+  </div>
+
+  <div id="audio-controls">
+    <button id="fs-btn" title="Vollbild">[ ]</button>
+    <button id="mute-btn" title="Ton an/aus">🔊</button>
+    <input id="vol-slider" type="range" min="0" max="100" value="70" title="Lautstärke">
+  </div>
+
+  <script type="module" src="src/main.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js');
+    }
+  </script>
+</body>
+</html>
