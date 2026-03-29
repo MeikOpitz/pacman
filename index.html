@@ -186,53 +186,7 @@
       #pause-btn { display: flex; }
     }
 
-    #dpad {
-      display: none;
-      margin-top: 20px;
-      width: 192px;
-      height: 192px;
-      grid-template-areas:
-        ".    up   ."
-        "left mid  right"
-        ".    down .";
-      grid-template-columns: 1fr 1fr 1fr;
-      grid-template-rows:    1fr 1fr 1fr;
-      gap: 6px;
-    }
-
-    @media (pointer: coarse) {
-      #dpad { display: grid; }
-    }
-
-    #dpad-up    { grid-area: up; }
-    #dpad-left  { grid-area: left; }
-    #dpad-mid   { grid-area: mid; background: rgba(10,15,50,0.6); border-radius: 10px; }
-    #dpad-right { grid-area: right; }
-    #dpad-down  { grid-area: down; }
-
-    #dpad button {
-      background: rgba(10, 20, 80, 0.80);
-      border: 1px solid #2244aa;
-      border-radius: 10px;
-      color: #7788dd;
-      font-size: 26px;
-      line-height: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-      user-select: none;
-      touch-action: none;
-      transition: background 0.08s, color 0.08s;
-    }
-
-    #dpad button:active,
-    #dpad button.pressed {
-      background: rgba(34, 68, 170, 0.55);
-      color: #ffffff;
-      border-color: #4466cc;
-    }
+    /* D-Pad entfernt – Steuerung per Swipe/Maus-Drag überall auf der Seite */
   </style>
 </head>
 <body>
@@ -249,14 +203,6 @@
     <div id="game-center" style="position:relative;">
       <canvas id="screen" width="896" height="1152"></canvas>
       <button id="pause-btn" title="Pause">❚❚</button>
-
-      <div id="dpad">
-        <button id="dpad-up">▲</button>
-        <button id="dpad-left">◀</button>
-        <div id="dpad-mid"></div>
-        <button id="dpad-right">▶</button>
-        <button id="dpad-down">▼</button>
-      </div>
     </div>
 
     <div id="panel-right" class="side-panel">

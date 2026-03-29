@@ -1,4 +1,4 @@
-const CACHE = 'pacman-v6';
+const CACHE = 'pacman-v7';
 const ASSETS = [
   './',
   './index.html',
