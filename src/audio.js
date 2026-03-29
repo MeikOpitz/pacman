@@ -28,25 +28,25 @@ function getCtx() {
   if (!actx) {
     actx = new AudioContext();
 
-    // Master Compressor → gleichmäßige Lautstärke
-    compressor = actx.createDynamicsCompressor();
-    compressor.threshold.value = -18;
-    compressor.knee.value      = 12;
-    compressor.ratio.value     = 4;
-    compressor.attack.value    = 0.003;
-    compressor.release.value   = 0.15;
-
     masterGain = actx.createGain();
     masterGain.gain.value = muted ? 0 : volume;
 
+    // Leichter Compressor
+    compressor = actx.createDynamicsCompressor();
+    compressor.threshold.value = -8;
+    compressor.knee.value      = 20;
+    compressor.ratio.value     = 2;
+    compressor.attack.value    = 0.01;
+    compressor.release.value   = 0.2;
+
     // Dry/Wet Reverb Mix
     dryGain = actx.createGain();
-    dryGain.gain.value = 0.75;
+    dryGain.gain.value = 0.85;
 
     reverbConv = actx.createConvolver();
-    reverbConv.buffer = createReverbImpulse(actx, 0.6, 2.5);
+    reverbConv.buffer = createReverbImpulse(actx, 0.5, 3.0);
     reverbGain = actx.createGain();
-    reverbGain.gain.value = 0.25;
+    reverbGain.gain.value = 0.15;
 
     // Routing: masterGain → compressor → dry + reverb → destination
     masterGain.connect(compressor);
@@ -96,17 +96,14 @@ function synth({ freq, type = 'sine', detune = 0, dur, vol = 0.2,
   osc.detune.value = detune;
 
   const g = ac.createGain();
-  g.gain.setValueAtTime(0, t);
-  // Attack
+  const end = t + dur;
+  g.gain.setValueAtTime(0.001, t);
   g.gain.linearRampToValueAtTime(vol, t + attack);
-  // Decay → Sustain
-  if (decay > 0) {
-    g.gain.linearRampToValueAtTime(vol * sustain, t + attack + decay);
+  if (decay > 0 && attack + decay < dur) {
+    g.gain.linearRampToValueAtTime(Math.max(0.001, vol * sustain), t + attack + decay);
   }
-  // Release
-  const releaseStart = t + dur - release;
-  g.gain.setValueAtTime(vol * (decay > 0 ? sustain : 1), releaseStart);
-  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  g.gain.setValueAtTime(Math.max(0.001, vol * (decay > 0 ? sustain : 1)), end - release);
+  g.gain.exponentialRampToValueAtTime(0.001, end);
 
   osc.connect(g);
 
