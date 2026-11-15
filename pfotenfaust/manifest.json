@@ -1,7 +1,7 @@
 {
-  "name": "Pfotenfaust – Die Hunde von Wuffingen",
+  "name": "Pfotenfaust – Fell gegen Federn",
   "short_name": "Pfotenfaust",
-  "description": "Retro-Prügelspiel im Handheld-Look: Drei Hunde gegen das Samtpfoten-Syndikat.",
+  "description": "Retro-Prügelspiel im Handheld-Look: Hunde oder Katzen gegen das Feder-Syndikat der Hühner.",
   "lang": "de",
   "start_url": "./index.html",
   "scope": "./",
