@@ -4,11 +4,18 @@ const cv = document.getElementById('scr'), ctx = cv.getContext('2d');
 ctx.imageSmoothingEnabled = false;
 const GRAV = 0.18, rnd = n => Math.random() * n, rint = n => Math.random() * n | 0;
 
-const DOGS = [
-  { id: 'rex', name: 'REX', sub: 'KNOCHENKEULE', spd: 1.15, jmp: 3.7, hp: 12, dmg: 4, reach: 20, at: 15, st: [3, 3, 3] },
-  { id: 'bruno', name: 'BRUNO', sub: 'BOX-PFOTEN', spd: 0.95, jmp: 3.65, hp: 16, dmg: 6, reach: 16, at: 19, st: [5, 2, 5] },
-  { id: 'lotte', name: 'LOTTE', sub: 'TENNISBÄLLE', spd: 1.42, jmp: 4.0, hp: 9, dmg: 3, reach: 12, at: 13, ranged: 1, st: [2, 5, 2] }
-];
+const TEAMS = {
+  dog: [
+    { id: 'rex', name: 'REX', sub: 'KNOCHENKEULE', spd: 1.15, jmp: 3.7, hp: 12, dmg: 4, reach: 20, at: 15, st: [3, 3, 3] },
+    { id: 'bruno', name: 'BRUNO', sub: 'BOX-PFOTEN', spd: 0.95, jmp: 3.65, hp: 16, dmg: 6, reach: 16, at: 19, st: [5, 2, 5] },
+    { id: 'lotte', name: 'LOTTE', sub: 'TENNISBÄLLE', spd: 1.42, jmp: 4.0, hp: 9, dmg: 3, reach: 12, at: 13, ranged: 1, shot: 'ball', st: [2, 5, 2] }],
+  cat: [
+    { id: 'mia', name: 'MIA', sub: 'KRALLEN', spd: 1.25, jmp: 3.8, hp: 11, dmg: 4, reach: 18, at: 13, st: [3, 4, 3] },
+    { id: 'moppel', name: 'MOPPEL', sub: 'BAUCHKLATSCHER', spd: 0.95, jmp: 3.65, hp: 16, dmg: 6, reach: 16, at: 19, st: [5, 2, 5] },
+    { id: 'luna', name: 'LUNA', sub: 'WOLLKNÄUEL', spd: 1.42, jmp: 4.0, hp: 9, dmg: 3, reach: 12, at: 13, ranged: 1, shot: 'wolle', st: [2, 5, 2] }]
+};
+let DOGS = TEAMS.dog; // aktuelles Team
+const spn = () => G.team === 'cat' ? 'FAUCH' : 'WUFF';
 const LV = [
   { name: 'HINTERHOF', theme: 'alley', len: 1280, mus: 'a', waves: ['t', 'tt', 'tw', 'ttt', 'wtt'], pits: [], plats: [[430, 92, 44], [830, 92, 44]],
     props: [[110, 'can'], [330, 'can'], [640, 'crate'], [900, 'can']], boss: 'kalle' },
@@ -17,36 +24,39 @@ const LV = [
   { name: 'ALTSTADT-DÄCHER', theme: 'roofs', len: 1620, mus: 'a', waves: ['jj', 'tj', 'jwj', 'fj', 'jjw', 'tjwj'], drop: 1,
     pits: [[250, 270], [470, 492], [660, 682], [900, 920], [1120, 1142], [1300, 1320]], plats: [[360, 92, 40], [760, 92, 44], [1200, 90, 40]],
     props: [[180, 'crate'], [580, 'can'], [1020, 'crate']], boss: 'schatten' },
-  { name: 'WOLLKNÄUEL-FABRIK', theme: 'factory', len: 1640, mus: 'b', waves: ['v', 'tv', 'fw', 'vjv', 'ffw', 'tvwj', 'fvf'], pits: [],
+  { name: 'EIERFABRIK', theme: 'factory', len: 1640, mus: 'b', waves: ['v', 'tv', 'fw', 'vjv', 'ffw', 'tvwj', 'fvf'], pits: [],
     plats: [[340, 92, 44], [800, 92, 44], [1100, 92, 44], [1500, 90, 36], [1580, 90, 36]], props: [[130, 'crate'], [460, 'crate'], [950, 'can'], [1250, 'crate']], boss: 'saug' },
-  { name: 'VILLA SCHNURR', theme: 'villa', len: 1700, mus: 'a', waves: ['tj', 'fw', 'vv', 'jjw', 'ff', 'tvwj', 'fjfw'], pits: [],
+  { name: 'VILLA GOCKEL', theme: 'villa', len: 1700, mus: 'a', waves: ['tj', 'fw', 'vv', 'jjw', 'ff', 'tvwj', 'fjfw'], pits: [],
     plats: [[380, 92, 44], [900, 92, 44], [1300, 92, 44]], props: [[140, 'vase'], [300, 'vase'], [560, 'vase'], [760, 'vase'], [1060, 'vase'], [1380, 'vase']], boss: 'baron' }
 ];
 const BOSS = {
-  kalle: { name: 'KRALLEN-KALLE', hp: 110, say: 'MEIN HOF, MEINE REGELN, FLOHTEPPICH!' },
-  graete: { name: "KÄPT'N GRÄTE", hp: 130, say: 'ARRR! IHR ENDET ALS FISCHFUTTER!' },
-  schatten: { name: 'SCHATTENPFOTE', hp: 140, say: '... (MIAU.)' },
-  saug: { name: 'SAUGNATOR 3000', hp: 170, say: 'ALLE HUNDEHAARE WERDEN ENTFERNT!' },
-  baron: { name: 'BARON VON SCHNURR', hp: 200, say: 'DER GOLDENE KNOCHEN GEHÖRT MIR. FÜR IMMER!' }
+  kalle: { name: 'HACK-HENNE HILDE', hp: 110, say: 'MEIN HOF, MEINE REGELN, FELLKNÄUEL!' },
+  graete: { name: "KÄPT'N KIKERIKI", hp: 130, say: 'ARRR! IHR ENDET ALS HÜHNERFUTTER!' },
+  schatten: { name: 'SCHATTENFEDER', hp: 140, say: '... (GACK.)' },
+  saug: { name: 'SAUGNATOR 3000', hp: 170, say: 'ALLE HAARE WERDEN ENTFERNT!' },
+  baron: { name: 'DON GOCKEL', hp: 200, say: 'DER GOLDENE NAPF GEHÖRT MIR. FÜR IMMER!' }
 };
-const STORY = [
-  ['WUFFINGEN, MITTERNACHT.', '', 'DER GOLDENE KNOCHEN,', 'SCHATZ ALLER HUNDE DER STADT,', 'IST AUS DEM RATHAUS VERSCHWUNDEN!'],
-  ['AM TATORT: WEISSE HAARE,', 'KRATZSPUREN ...', 'UND EIN MONOKEL-PUTZTUCH.', '', 'DAS SAMTPFOTEN-SYNDIKAT!'],
-  ['IHR ANFÜHRER, DER FEINE', 'BARON VON SCHNURR, LACHT SICH', 'IN SEINER VILLA INS PFÖTCHEN.', '', 'ABER NICHT MEHR LANGE ...'],
-  ['DREI HUNDE NEHMEN DIE', 'FÄHRTE AUF:', '', 'REX, BRUNO UND LOTTE -', 'DIE PFOTENFAUST!']
-];
+function story() {
+  const n = DOGS.map(d => d.name);
+  return [
+    ['PFOTENHAUSEN, MITTERNACHT.', '', 'DER GOLDENE NAPF, SCHATZ', 'ALLER HUNDE UND KATZEN, IST', 'AUS DEM RATHAUS VERSCHWUNDEN!'],
+    ['AM TATORT: WEISSE FEDERN,', 'KÖRNERKRÜMEL ...', 'UND EIN MONOKEL-PUTZTUCH.', '', 'DAS FEDER-SYNDIKAT!'],
+    ['IHR ANFÜHRER, DER FEINE', 'DON GOCKEL, KRÄHT VOR LACHEN', 'IN SEINER VILLA.', '', 'ABER NICHT MEHR LANGE ...'],
+    ['DREI ' + (G.team === 'cat' ? 'KATZEN' : 'HUNDE') + ' NEHMEN DIE', 'FÄHRTE AUF:', '', n[0] + ', ' + n[1] + ' UND ' + n[2] + ' -', 'DIE PFOTENFAUST!']];
+}
 const AFTER = [
-  ["KALLE WINSELT: 'DER KNOCHEN?", "LÄNGST AM HAFEN, AUF", "KÄPT'N GRÄTES KUTTER!'"],
-  ['IM FRACHTRAUM: NUR FISCH.', 'ABER PFOTENSPUREN FÜHREN', 'HINAUF AUF DIE DÄCHER ...'],
-  ['SCHATTENPFOTE VERPUFFT IM', 'RAUCH. UNTEN BRUMMT DIE', 'WOLLKNÄUEL-FABRIK DES BARONS.'],
-  ['DER SAUGNATOR IST SCHROTT.', 'JETZT BLEIBT NUR NOCH EINS:', 'DIE VILLA SCHNURR!']
+  ["HILDE GACKERT: 'DER NAPF?", "LÄNGST AM HAFEN, AUF", "KÄPT'N KIKERIKIS KUTTER!'"],
+  ['IM FRACHTRAUM: NUR KÖRNER.', 'ABER KRALLENSPUREN FÜHREN', 'HINAUF AUF DIE DÄCHER ...'],
+  ['SCHATTENFEDER VERPUFFT IM', 'RAUCH. UNTEN BRUMMT DIE', 'EIERFABRIK DES DONS.'],
+  ['DER SAUGNATOR IST SCHROTT.', 'JETZT BLEIBT NUR NOCH EINS:', 'DIE VILLA GOCKEL!']
 ];
-const ENDING = [
-  ["DER BARON SCHNIEFT: 'ICH WOLLTE", "DOCH NUR ... EIN EINZIGES MAL", "DARAN KNABBERN. NIEMAND LÄDT", "KATZEN ZUM KNOCHENFEST EIN!'"],
-  ['DIE DREI SEHEN SICH AN.', '', "REX BRUMMT: 'DANN KOMM HALT", "MIT. ABER DIE WOLLE", "BLEIBT ZU HAUSE.'"],
-  ['SEITDEM FEIERT WUFFINGEN', 'DAS KNOCHENFEST GEMEINSAM.', '', 'ES GIBT WURST. UND THUNFISCH.', 'UND ERSTAUNLICH WENIG ÄRGER.'],
-  ['', 'ENDE', '', 'DANKE FÜRS SPIELEN!']
-];
+function ending() {
+  return [
+    ["DON GOCKEL SCHNIEFT: 'ICH WOLLTE", "DOCH NUR ... EIN EINZIGES MAL", "DARAUS PICKEN. NIEMAND LÄDT", "HÜHNER ZUM NAPFFEST EIN!'"],
+    ['DIE DREI SEHEN SICH AN.', '', DOGS[0].name + (G.team === 'cat' ? ' SCHNURRT' : ' BRUMMT') + ": 'DANN KOMM", "HALT MIT. ABER DAS KRÄHEN", "UM FÜNF UHR FRÜH BLEIBT AUS.'"],
+    ['SEITDEM FEIERT PFOTENHAUSEN', 'DAS NAPFFEST GEMEINSAM.', '', 'ES GIBT WURST, THUNFISCH UND', 'KÖRNER. UND KAUM NOCH ÄRGER.'],
+    ['', 'ENDE', '', 'DANKE FÜRS SPIELEN!']];
+}
 
 // ---------- Eingabe ----------
 const key = {}, prev = {}, JP = {};
@@ -73,11 +83,12 @@ function bindTouch() {
 function pollInput() { for (const k of ['left', 'right', 'up', 'down', 'a', 'b', 'c', 'start', 'select', 'mute']) { JP[k] = key[k] && !prev[k]; prev[k] = key[k]; } }
 
 // ---------- Zustand ----------
-const G = { scr: 'title', t: 0, lvl: 0, score: 0, hi: 0, saved: 0, hp: [0, 0, 0], out: [0, 0, 0], cur: 0, wuff: 0, cam: 0, shake: 0, hs: 0, dmg: false, page: 0, sel: 0, pause: false, menu: 0 };
+const G = { scr: 'title', t: 0, lvl: 0, score: 0, hi: 0, saved: 0, hp: [0, 0, 0], out: [0, 0, 0], cur: 0, wuff: 0, cam: 0, shake: 0, hs: 0, dmg: false, page: 0, sel: 0, pause: false, menu: 0, team: 'dog', teamSel: 0, cont: 0 };
 let L = null, P = null, en = [], shots = [], items = [], fx = [], props = [], haz = [], HID = 1;
-try { const s = JSON.parse(localStorage.getItem('pfotenfaust') || '{}'); G.saved = s.lvl || 0; G.hi = s.hi || 0; G.dmg = !!s.dmg; } catch (e) { }
-function save() { try { localStorage.setItem('pfotenfaust', JSON.stringify({ lvl: G.saved, hi: G.hi, dmg: G.dmg })); } catch (e) { } }
+try { const s = JSON.parse(localStorage.getItem('pfotenfaust') || '{}'); G.saved = s.lvl || 0; G.hi = s.hi || 0; G.dmg = !!s.dmg; if (s.team === 'cat') { G.team = 'cat'; DOGS = TEAMS.cat; G.teamSel = 1; } } catch (e) { }
+function save() { try { localStorage.setItem('pfotenfaust', JSON.stringify({ lvl: G.saved, hi: G.hi, dmg: G.dmg, team: G.team })); } catch (e) { } }
 
+function setTeam(t) { G.team = t; DOGS = TEAMS[t]; save(); const b = document.getElementById('bC'); if (b) b.textContent = spn() + '!'; }
 function go(scr) { G.scr = scr; G.t = 0; G.page = 0; }
 function newGame(lvl) { G.lvl = lvl; G.score = 0; resetDogs(); G.wuff = 0; G.pickNext = 'intro'; go('pick'); G.sel = 0; AU.music('title'); }
 function resetDogs() { DOGS.forEach((d, i) => { G.hp[i] = d.hp; G.out[i] = 0; }); }
@@ -111,7 +122,7 @@ function hurtP(dmg, dir) {
   return true;
 }
 function bark() {
-  G.wuff = 0; P.st = 'bark'; P.t = 50; G.shake = 26; AU.sfx('bark'); G.flash = 8;
+  G.wuff = 0; P.st = 'bark'; P.t = 50; G.shake = 26; AU.sfx(G.team === 'cat' ? 'hiss' : 'bark'); G.flash = 8;
   for (let i = 0; i < 3; i++) addFx(P.x + P.face * 8, P.y - 20, 'ring', { life: 40, d: i * 8 });
   shots = shots.filter(s => !s.foe); haz = [];
   en.forEach(e => { if (e.st !== 'dead' && !e.hid && e.x > G.cam - 20 && e.x < G.cam + 180) hitE(e, e.boss ? 14 : 12, e.x > P.x ? 1 : -1, true); });
@@ -207,7 +218,7 @@ function updPlayer() {
 function land() { P.onG = true; P.vy = 0; P.jatk = 0; if (P.st === 'atk' && P.t > 4) { P.st = 'idle'; P.combo = 0; } }
 function throwBall() {
   if (shots.filter(s => !s.foe).length >= 3) return; AU.sfx('thr');
-  shots.push({ x: P.x + P.face * 8, y: P.y - (P.duck ? 6 : 15), vx: P.face * 2.7, vy: P.duck ? -0.2 : -0.9, g: 0.07, type: 'ball', foe: 0, dmg: DOGS[2].dmg, life: 70, b: 1 });
+  shots.push({ x: P.x + P.face * 8, y: P.y - (P.duck ? 6 : 15), vx: P.face * 2.7, vy: P.duck ? -0.2 : -0.9, g: 0.07, type: DOGS[G.cur].shot || 'ball', foe: 0, dmg: DOGS[G.cur].dmg, life: 70, b: 1 });
 }
 
 // ---------- Gegner ----------
@@ -388,7 +399,7 @@ function updWorld() {
     if (P.st !== 'ko' && Math.abs(it.x - P.x) < 10 && it.y > P.y - 26 && it.y < P.y + 6) {
       it.rm = 1; AU.sfx('pick');
       if (it.t === 'wurst') { G.hp[G.cur] = Math.min(DOGS[G.cur].hp, G.hp[G.cur] + 5); popup(it.x, it.y - 10, 'LECKER!'); }
-      else if (it.t === 'keks') { G.wuff = Math.min(100, G.wuff + 40); popup(it.x, it.y - 10, 'WUFF+'); }
+      else if (it.t === 'keks') { G.wuff = Math.min(100, G.wuff + 40); popup(it.x, it.y - 10, spn() + '+'); }
       else if (it.t === 'gold') { addScore(5000, it.x, it.y - 10); L.gold = 1; }
       else addScore(200, it.x, it.y - 10);
     }
@@ -415,14 +426,18 @@ function update() {
     case 'title':
       AU.music('title');
       if (G.saved > 0 && (JP.up || JP.down)) { G.menu ^= 1; AU.sfx('sel'); }
-      if (ok && G.t > 20) { AU.init(); AU.sfx('ok'); if (G.saved > 0 && G.menu === 1) newGame(G.saved); else go('story'); }
+      if (ok && G.t > 20) { AU.init(); AU.sfx('ok'); G.cont = G.saved > 0 && G.menu === 1 ? G.saved : 0; go('team'); }
+      break;
+    case 'team':
+      if (JP.left || JP.right) { G.teamSel ^= 1; AU.sfx('sel'); }
+      if (ok && G.t > 15) { setTeam(G.teamSel ? 'cat' : 'dog'); AU.sfx('ok'); AU.sfx(G.teamSel ? 'hiss' : 'bark'); if (G.cont) newGame(G.cont); else go('story'); }
       break;
     case 'story':
-      if (ok || G.t > 520) { AU.sfx('sel'); if (JP.start || G.page >= STORY.length - 1) newGame(0); else { G.page++; G.t = 0; } }
+      if (ok || G.t > 520) { AU.sfx('sel'); if (JP.start || G.page >= 3) newGame(0); else { G.page++; G.t = 0; } }
       break;
     case 'pick':
       if (JP.left || JP.right) { let s = G.sel; for (let i = 0; i < 3; i++) { s = (s + (JP.left ? 2 : 1)) % 3; if (!G.out[s]) break; } G.sel = s; AU.sfx('sel'); }
-      if (ok && G.t > 15 && !G.out[G.sel]) { G.cur = G.sel; AU.sfx('ok'); AU.sfx('bark'); if (G.pickNext === 'intro') startLevel(); else { P.st = 'idle'; P.inv = 150; P.y = GY - 30; P.x = P.safeX; P.onG = false; P.vy = 0; P.vx = 0; go('play'); } }
+      if (ok && G.t > 15 && !G.out[G.sel]) { G.cur = G.sel; AU.sfx('ok'); AU.sfx(G.team === 'cat' ? 'hiss' : 'bark'); if (G.pickNext === 'intro') startLevel(); else { P.st = 'idle'; P.inv = 150; P.y = GY - 30; P.x = P.safeX; P.onG = false; P.vy = 0; P.vx = 0; go('play'); } }
       break;
     case 'intro': if (G.t > 130 || (G.t > 30 && ok)) { go('play'); AU.music('s' + (G.lvl + 1)); } break;
     case 'play':
@@ -436,7 +451,7 @@ function update() {
       break;
     case 'clear': if (G.t > 60 && ok) { G.lvl++; resetDogs(); G.pickNext = 'intro'; G.sel = G.cur; go('pick'); AU.music('title'); } break;
     case 'over': if (G.t > 60 && ok) { G.score = L.startScore; resetDogs(); G.wuff = 0; G.pickNext = 'intro'; G.sel = 0; go('pick'); AU.music('title'); } break;
-    case 'ending': if (G.t > 50 && ok) { if (G.page >= ENDING.length - 1) { go('title'); } else { G.page++; G.t = 0; AU.sfx('sel'); } } break;
+    case 'ending': if (G.t > 50 && ok) { if (G.page >= 3) { go('title'); } else { G.page++; G.t = 0; AU.sfx('sel'); } } break;
   }
 }
 
@@ -493,14 +508,14 @@ function bar(x, y, w, v, max, c1, c0) { ctx.fillStyle = K; ctx.fillRect(x - 1, y
 function drawHUD() {
   const D = DOGS[G.cur]; ctx.fillStyle = K; ctx.fillRect(0, 0, W, 14); ctx.fillStyle = '#5c2e78'; ctx.fillRect(0, 14, W, 1);
   text(ctx, D.name, 2, 2, WH); bar(27, 3, D.hp * 2, G.hp[G.cur], D.hp, '#e0483a', '#4a1c28');
-  const full = G.wuff >= 100; text(ctx, 'WUFF', 2, 8, full && (G.t & 8) ? '#fff' : '#f0c838'); bar(27, 9, 32, G.wuff, 100, full && (G.t & 8) ? '#fff' : '#f0c838', '#4a3a18');
+  const full = G.wuff >= 100; text(ctx, spn(), 2, 8, full && (G.t & 8) ? '#fff' : '#f0c838'); bar(27, 9, 32, G.wuff, 100, full && (G.t & 8) ? '#fff' : '#f0c838', '#4a3a18');
   for (let i = 0; i < 3; i++) { const c = SPECS[DOGS[i].id]; ctx.fillStyle = G.out[i] ? '#3a3448' : c.fur; ctx.fillRect(68 + i * 7, 3, 5, 5); ctx.fillStyle = G.out[i] ? '#3a3448' : c.cloth; ctx.fillRect(68 + i * 7, 8, 5, 3); if (i === G.cur) { ctx.fillStyle = WH; ctx.fillRect(68 + i * 7, 12, 5, 1); } }
   text(ctx, String(G.score).padStart(6, '0'), W - 25, 2, WH); text(ctx, 'L' + (G.lvl + 1) + '-' + Math.min(L.wi + 1, L.waves.length + 1) , W - 25, 8, '#8e96b4');
   if (L.boss && L.boss.st !== 'gone') { const b = L.boss; textO(ctx, BOSS[b.kind].name, 4, H - 13, WH); bar(4, H - 6, W - 8, Math.max(0, b.hp), b.max, '#b060e0', '#2a1838'); }
   if (L.goT > 0 && (G.t & 16) && !L.lock) { textO(ctx, 'LOS! >', W - 30, 22, '#f0c838'); }
-  if (full && !L.boss && (G.t & 32)) textO(ctx, 'WUFF BEREIT!', 2, 18, '#f0c838');
+  if (full && !L.boss && (G.t & 32)) textO(ctx, spn() + ' BEREIT!', 2, 18, '#f0c838');
   if (L.boss && L.boss.st === 'talk') dialog(BOSS[L.boss.kind].name, BOSS[L.boss.kind].say, L.bossT);
-  if (L.done && L.doneT > 30) { textCO(ctx, G.lvl === 4 && !L.gold ? 'HOL DIR DEN KNOCHEN!' : 'GESCHAFFT!', W / 2, 40, '#f0c838', G.lvl === 4 && !L.gold ? 1 : 2); }
+  if (L.done && L.doneT > 30) { textCO(ctx, G.lvl === 4 && !L.gold ? 'HOL DIR DEN NAPF!' : 'GESCHAFFT!', W / 2, 40, '#f0c838', G.lvl === 4 && !L.gold ? 1 : 2); }
   if (G.pause) { ctx.fillStyle = 'rgba(10,6,20,0.7)'; ctx.fillRect(0, 0, W, H); textCO(ctx, 'PAUSE', W / 2, 50, WH, 2); textC(ctx, 'START: WEITER', W / 2, 74, '#8e96b4'); textC(ctx, 'SELECT: FARBMODUS', W / 2, 84, '#8e96b4'); }
 }
 function wrap(s, n) { const out = []; let l = ''; s.split(' ').forEach(w => { if ((l + ' ' + w).trim().length > n) { out.push(l); l = w; } else l = (l + ' ' + w).trim(); }); if (l) out.push(l); return out; }
@@ -518,8 +533,8 @@ function drawTitle() {
   const y = 10 + Math.round(Math.sin(G.t / 30) * 1.5);
   textO(ctx, 'PFOTEN', 21, y + 2, '#5c2e78', 5); textO(ctx, 'PFOTEN', 20, y, '#f0c838', 5);
   textO(ctx, 'FAUST', 31, y + 30, '#5c2e78', 5); textO(ctx, 'FAUST', 30, y + 28, '#f6f0dc', 5);
-  textCO(ctx, 'DIE HUNDE VON WUFFINGEN', W / 2, 66, '#f09aa8');
-  const w = (G.t >> 3) & 3; spr(ctx, SPECS.bruno.F.idle[(G.t >> 4) & 1], 30, GY, 1); spr(ctx, SPECS.rex.F[G.t % 240 < 30 ? 'atk1' : 'idle'][G.t % 240 < 30 ? 1 : (G.t >> 4) & 1], 52, GY, 1); spr(ctx, SPECS.lotte.F.win[(G.t >> 3) & 1], 72, GY, 1);
+  textCO(ctx, 'FELL GEGEN FEDERN', W / 2, 66, '#f09aa8');
+  const w = (G.t >> 3) & 3; spr(ctx, SPECS.moppel.F.idle[(G.t >> 4) & 1], 14, GY, 1); spr(ctx, SPECS.rex.F[G.t % 240 < 30 ? 'atk1' : 'idle'][G.t % 240 < 30 ? 1 : (G.t >> 4) & 1], 34, GY, 1); spr(ctx, SPECS.mia.F[G.t % 240 > 120 && G.t % 240 < 150 ? 'atk2' : 'idle'][G.t % 240 > 120 && G.t % 240 < 150 ? 1 : (G.t >> 4) & 1], 54, GY, 1); spr(ctx, SPECS.lotte.F.win[(G.t >> 3) & 1], 74, GY, 1);
   spr(ctx, SPECS.thug.F.walk[w], 112, GY, -1); spr(ctx, SPECS.jumper.F.idle[(G.t >> 4) & 1], 130, GY, -1); spr(ctx, SPECS.baron.F.idle[(G.t >> 4) & 1], 148, GY - 0, -1);
   if (G.saved > 0) { textCO(ctx, (G.menu === 0 ? '> ' : '  ') + 'NEUES SPIEL', W / 2, 76, G.menu === 0 ? WH : '#8e96b4'); textCO(ctx, (G.menu === 1 ? '> ' : '  ') + 'WEITER: LEVEL ' + (G.saved + 1), W / 2, 84, G.menu === 1 ? WH : '#8e96b4'); }
   else if (G.t & 32) textCO(ctx, 'START DRÜCKEN', W / 2, 80, WH);
@@ -527,7 +542,7 @@ function drawTitle() {
 }
 let TITLEBG = null;
 function drawPick() {
-  starsBg('#1a1638', '#463270'); textCO(ctx, G.pickNext === 'play' ? 'WER SPRINGT EIN?' : 'WÄHLE DEINEN HUND', W / 2, 8, '#f0c838');
+  starsBg('#1a1638', '#463270'); textCO(ctx, G.pickNext === 'play' ? 'WER SPRINGT EIN?' : G.team === 'cat' ? 'WÄHLE DEINE KATZE' : 'WÄHLE DEINEN HUND', W / 2, 8, '#f0c838');
   DOGS.forEach((d, i) => {
     const x = 28 + i * 52, S = SPECS[d.id], sel = i === G.sel;
     ctx.fillStyle = sel ? '#5c2e78' : '#2a2250'; ctx.fillRect(x - 22, 22, 44, 62); if (sel) { ctx.fillStyle = '#f0c838'; ctx.fillRect(x - 22, 22, 44, 1); ctx.fillRect(x - 22, 83, 44, 1); ctx.fillRect(x - 22, 22, 1, 62); ctx.fillRect(x + 21, 22, 1, 62); }
@@ -540,15 +555,28 @@ function drawPick() {
   ['KRAFT', 'TEMPO', 'LEBEN'].forEach((n, i) => { text(ctx, n, 38, 102 + i * 8, '#f09aa8'); for (let k = 0; k < 5; k++) { ctx.fillStyle = k < d.st[i] ? '#f0c838' : '#3c2e68'; ctx.fillRect(66 + k * 11, 102 + i * 8, 9, 5); } });
   if (G.t & 32) textC(ctx, '< > WÄHLEN   A: LOS!', W / 2, 132, '#8e96b4');
 }
+function drawTeam() {
+  starsBg('#1a1638', '#463270'); textCO(ctx, 'WER KÄMPFT GEGEN DIE HÜHNER?', W / 2, 8, '#f0c838');
+  [['dog', 'TEAM HUNDE'], ['cat', 'TEAM KATZEN']].forEach(([t, n], i) => {
+    const x = 42 + i * 76, sel = i === G.teamSel;
+    ctx.fillStyle = sel ? '#5c2e78' : '#2a2250'; ctx.fillRect(x - 35, 24, 70, 78); if (sel) { ctx.fillStyle = '#f0c838'; ctx.fillRect(x - 35, 24, 70, 1); ctx.fillRect(x - 35, 101, 70, 1); ctx.fillRect(x - 35, 24, 1, 78); ctx.fillRect(x + 34, 24, 1, 78); }
+    ctx.fillStyle = '#3c2e68'; ctx.fillRect(x - 30, 78, 60, 3);
+    TEAMS[t].forEach((d, k) => { const F = SPECS[d.id].F; spr(ctx, sel ? F.win[((G.t >> 3) + k) & 1] : F.idle[(G.t >> 4) & 1], x - 20 + k * 20, 78, 1); });
+    textC(ctx, n, x, 86, sel ? WH : '#8e96b4'); textC(ctx, TEAMS[t].map(d => d.name).join(' '), x, 94, sel ? '#f09aa8' : '#5a6082');
+  });
+  spr(ctx, SPECS.thug.F.walk[(G.t >> 3) & 3], 60, 132, 1); spr(ctx, SPECS.jumper.F.idle[(G.t >> 4) & 1], 80, 132, -1); spr(ctx, SPECS.thrower.F.walk[(G.t >> 3) & 3], 100, 132, -1);
+  if (G.t & 32) textC(ctx, '< > WÄHLEN   A: LOS!', W / 2, 136, '#8e96b4');
+}
 function draw() {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   switch (G.scr) {
     case 'title': drawTitle(); break;
-    case 'story': starsBg('#120e28', '#3c2e68'); { const sp = [SPECS.baron, SPECS.thug, SPECS.baron, SPECS.rex][G.page];
-      if (G.page === 3) { spr(ctx, SPECS.bruno.F.idle[0], 58, 56, 1); spr(ctx, SPECS.rex.F.win[(G.t >> 3) & 1], 80, 56, 1); spr(ctx, SPECS.lotte.F.idle[1], 100, 56, 1); }
+    case 'team': drawTeam(); break;
+    case 'story': starsBg('#120e28', '#3c2e68'); { const sp = [SPECS.baron, SPECS.thug, SPECS.baron, SPECS.thug][G.page];
+      if (G.page === 3) { DOGS.forEach((d, i) => spr(ctx, SPECS[d.id].F[i === 0 ? 'win' : 'idle'][(G.t >> 3) & 1], [80, 58, 100][i], 56, 1)); }
       else if (G.page === 0) { sprC(ctx, SPR.gold, W / 2, 40 + Math.sin(G.t / 12) * 3); if (G.t & 8) sprC(ctx, SPR.star[0], W / 2 + 8, 34); }
       else spr(ctx, sp.F[G.page === 2 ? 'win' : 'walk'][(G.t >> 3) & 1], W / 2, 58, G.page === 1 ? -1 : 1);
-      panel(STORY[G.page], G.t, 72); if (G.t & 32) text(ctx, 'A >', W - 16, H - 9, '#f0c838'); text(ctx, 'START: ÜBERSPRINGEN', 3, H - 9, '#5a6082'); } break;
+      panel(story()[G.page], G.t, 72); if (G.t & 32) text(ctx, 'A >', W - 16, H - 9, '#f0c838'); text(ctx, 'START: ÜBERSPRINGEN', 3, H - 9, '#5a6082'); } break;
     case 'pick': drawPick(); break;
     case 'intro': ctx.fillStyle = K; ctx.fillRect(0, 0, W, H); textC(ctx, 'LEVEL ' + (G.lvl + 1), W / 2, 44, '#f09aa8', 2); textC(ctx, L.d.name, W / 2, 66, WH, L.d.name.length > 12 ? 1 : 2);
       spr(ctx, SPECS[DOGS[G.cur].id].F.walk[(G.t >> 3) & 3], 20 + G.t, 112, 1); textC(ctx, 'BOSS: ' + BOSS[L.d.boss].name, W / 2, 124, '#8e96b4'); break;
@@ -558,12 +586,12 @@ function draw() {
       textC(ctx, 'LEBENS-BONUS  +' + G.bonus, W / 2, 62, WH); textC(ctx, 'PUNKTE  ' + G.score, W / 2, 71, WH);
       panel(AFTER[G.lvl], Math.max(0, G.t - 30), 88); if (G.t > 60 && (G.t & 32)) textC(ctx, 'A: WEITER', W / 2, 130, '#f0c838'); break;
     case 'over': ctx.fillStyle = '#14081a'; ctx.fillRect(0, 0, W, H); textC(ctx, 'GAME OVER', W / 2, 30, '#e0483a', 3); spr(ctx, SPECS.baron.F.win[(G.t >> 3) & 1], W / 2, 92, 1);
-      textC(ctx, "'HRR HRR HRR! BRAVE HÜNDCHEN.'", W / 2, 100, '#f09aa8'); if (G.t > 60 && (G.t & 32)) textC(ctx, 'A: NOCHMAL VERSUCHEN', W / 2, 120, WH); break;
+      textC(ctx, "'KIKERIKI! BRAVE FELLNASEN.'", W / 2, 100, '#f09aa8'); if (G.t > 60 && (G.t & 32)) textC(ctx, 'A: NOCHMAL VERSUCHEN', W / 2, 120, WH); break;
     case 'ending': starsBg('#2a1638', '#8a4aa8');
       if (G.page === 0) spr(ctx, SPECS.baron.F.pant[(G.t >> 4) & 1], W / 2, 56, 1);
       else if (G.page === 3) { sprC(ctx, SPR.gold, W / 2, 30 + Math.sin(G.t / 12) * 3); textC(ctx, 'PUNKTE ' + G.score, W / 2, 118, '#f0c838'); }
       else { DOGS.forEach((d, i) => spr(ctx, SPECS[d.id].F.win[((G.t >> 3) + i) & 1], 40 + i * 22, 56, 1)); spr(ctx, SPECS.baron.F[G.page === 2 ? 'win' : 'idle'][(G.t >> 3) & 1], 124, 56, -1); }
-      panel(ENDING[G.page], G.t, 70); if (G.t > 50 && (G.t & 32)) text(ctx, 'A >', W - 16, H - 9, '#f0c838'); break;
+      panel(ending()[G.page], G.t, 70); if (G.t > 50 && (G.t & 32)) text(ctx, 'A >', W - 16, H - 9, '#f0c838'); break;
   }
   if (G.dmg) { const im = ctx.getImageData(0, 0, W, H), d = im.data, pal = [[15, 56, 15], [48, 98, 48], [139, 172, 15], [155, 188, 15]];
     for (let i = 0; i < d.length; i += 4) { const l = d[i] * 0.3 + d[i + 1] * 0.55 + d[i + 2] * 0.15, c = pal[l < 48 ? 0 : l < 105 ? 1 : l < 170 ? 2 : 3]; d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; }
@@ -571,7 +599,7 @@ function draw() {
 }
 
 // ---------- Start ----------
-defSpecs(); defSprites(); bindTouch();
+defSpecs(); defSprites(); bindTouch(); setTeam(G.team);
 let last = 0, acc = 0;
 function loop(ts) { acc += Math.min(100, ts - last); last = ts; let n = 0; while (acc >= 1000 / 60 && n++ < 5) { update(); acc -= 1000 / 60; } if (n > 4) acc = 0; draw(); requestAnimationFrame(loop); }
 requestAnimationFrame(ts => { last = ts; loop(ts); });
