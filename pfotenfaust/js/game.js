@@ -424,7 +424,7 @@ function update() {
       if (JP.left || JP.right) { let s = G.sel; for (let i = 0; i < 3; i++) { s = (s + (JP.left ? 2 : 1)) % 3; if (!G.out[s]) break; } G.sel = s; AU.sfx('sel'); }
       if (ok && G.t > 15 && !G.out[G.sel]) { G.cur = G.sel; AU.sfx('ok'); AU.sfx('bark'); if (G.pickNext === 'intro') startLevel(); else { P.st = 'idle'; P.inv = 150; P.y = GY - 30; P.x = P.safeX; P.onG = false; P.vy = 0; P.vx = 0; go('play'); } }
       break;
-    case 'intro': if (G.t > 130 || (G.t > 30 && ok)) { go('play'); AU.music(L.d.mus); } break;
+    case 'intro': if (G.t > 130 || (G.t > 30 && ok)) { go('play'); AU.music('s' + (G.lvl + 1)); } break;
     case 'play':
       if (JP.start) { G.pause = !G.pause; AU.sfx('sel'); }
       if (G.pause) break;
