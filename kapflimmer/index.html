@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Kap Flimmer – Der Flipper vom Leuchtturm</title>
+<meta name="description" content="Kap Flimmer: Retro-Flipper im Handheld-Look. Entzünde das Leuchtfeuer, hol die Kutter heim und leg dich mit Knut, dem Kraken, an.">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#2a2038">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: #17121f; overflow: hidden; overscroll-behavior: none;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; color: #cfc6e0;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: none; }
+  body { display: flex; align-items: center; justify-content: center; }
+  .gb { --cw: min(94vw, calc((100dvh - 250px) * 1.111), 520px); width: calc(var(--cw) + 24px); max-width: 100vw;
+    background: linear-gradient(160deg, #6d5a92, #4c3d6c 60%, #3d3059); border-radius: 14px 14px 46px 14px; padding: 10px 12px 14px;
+    box-shadow: inset 0 2px 0 #9a86c2, inset 0 -4px 0 #2a2040, 0 10px 30px #000a; }
+  .bezel { background: #221a30; border-radius: 8px 8px 22px 8px; padding: 9px 9px 5px; box-shadow: inset 0 2px 5px #000a; }
+  canvas { display: block; width: calc(var(--cw) - 18px); aspect-ratio: 160 / 144; margin: 0 auto; background: #000;
+    image-rendering: pixelated; image-rendering: crisp-edges; border-radius: 2px; }
+  .brand { font-size: 9px; letter-spacing: 2px; text-align: center; color: #8d7fb0; padding-top: 4px; font-weight: 700; }
+  .brand b { color: #f0c838; }
+  .ctrl { position: relative; height: 176px; margin-top: 10px; }
+  #dpad { position: absolute; left: 0; top: 6px; width: 132px; height: 132px; border-radius: 50%; touch-action: none; }
+  #dpad::before, #dpad::after { content: ""; position: absolute; background: #1e1829; border-radius: 7px; box-shadow: inset 0 2px 0 #3a3050, 0 3px 0 #120e1a; }
+  #dpad::before { left: 44px; top: 6px; width: 44px; height: 120px; }
+  #dpad::after { left: 6px; top: 44px; width: 120px; height: 44px; }
+  #dpad i { position: absolute; left: 56px; top: 56px; width: 20px; height: 20px; border-radius: 50%; background: #2c2440; z-index: 2; }
+  .btn { position: absolute; width: 66px; height: 66px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #d8507a, #9a2850);
+    box-shadow: 0 4px 0 #5c1432, inset 0 2px 0 #f08aa8; color: #ffd9e4; font-weight:700; font-size:20px; line-height:66px; text-align: center; touch-action: none; }
+  .btn small { position: absolute; left: 0; right: 0; bottom: -17px; font-weight:700; font-size:8px; line-height:1; letter-spacing: 1px; color: #b9aad6; }
+  .btn.on, .pill.on { transform: translateY(3px); box-shadow: 0 1px 0 #5c1432; filter: brightness(1.25); }
+  #bA { right: 0; top: 12px; } #bB { right: 76px; top: 52px; }
+  .pill { position: absolute; height: 22px; border-radius: 11px; background: #2c2440; box-shadow: 0 3px 0 #17121f, inset 0 1px 0 #4a3f66;
+    color: #b9aad6; font-weight:700; font-size:8px; line-height:22px; letter-spacing: 1px; text-align: center; padding: 0 10px; touch-action: none; }
+  #bC { right: 150px; top: 6px; background: #c79a1e; color: #2a2038; box-shadow: 0 3px 0 #6e5410, inset 0 1px 0 #ffe27a; height: 30px; line-height: 30px; font-size: 10px; }
+  #bSel { left: calc(50% - 74px); bottom: 0; } #bSta { left: calc(50% + 4px); bottom: 0; }
+  .keys { display: none; font-size: 10px; text-align: center; margin-top: 8px; color: #b9aad6; line-height: 1.5; }
+  @media (hover: hover) and (pointer: fine) { .keys { display: block; } .gb { --cw: min(94vw, calc((100dvh - 290px) * 1.111), 520px); } }
+  @media (orientation: landscape) and (max-height: 520px) {
+    .gb { --cw: calc((100dvh - 34px) * 1.111); width: 100vw; height: 100dvh; border-radius: 0; padding: 6px 0; display: flex; justify-content: center; }
+    .bezel { padding: 6px 8px 2px; border-radius: 8px; }
+    .ctrl { position: static; height: 0; margin: 0; }
+    #dpad { left: max(6px, calc((100vw - var(--cw)) / 4 - 70px)); top: auto; bottom: 34px; }
+    #bA { right: max(8px, calc((100vw - var(--cw)) / 4 - 70px)); top: auto; bottom: 100px; }
+    #bB { right: calc(max(8px, calc((100vw - var(--cw)) / 4 - 70px)) + 72px); top: auto; bottom: 50px; }
+    #bC { right: max(8px, calc((100vw - var(--cw)) / 4 - 70px)); top: 14px; }
+    #bSel { left: 10px; top: 12px; bottom: auto; } #bSta { left: 76px; top: 12px; bottom: auto; }
+    .keys { display: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="gb">
+  <div class="bezel">
+    <canvas id="scr" width="160" height="144"></canvas>
+    <div class="brand">KAP<b>FLIMMER</b> · POCKET</div>
+  </div>
+  <div class="ctrl">
+    <div id="dpad"><i></i></div>
+    <div class="pill" id="bC" data-k="c">RÜTTELN</div>
+    <div class="btn" id="bB" data-k="b">B<small>LINKS</small></div>
+    <div class="btn" id="bA" data-k="a">A<small>RECHTS</small></div>
+    <div class="pill" id="bSel" data-k="select">SELECT</div>
+    <div class="pill" id="bSta" data-k="start">START</div>
+  </div>
+  <div class="keys">Pfeil links / Z: linker Flipper · Pfeil rechts / X: rechter Flipper<br>X oder Leertaste halten: Abschuss · C / Pfeil hoch: Rütteln · Enter: Pause · Shift: Farbmodus · M: Ton</div>
+</div>
+<script src="js/table.js"></script>
+<script src="js/art.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/game.js"></script>
+<script>if ('serviceWorker' in navigator && location.protocol === 'https:' && !/claude/.test(location.hostname)) navigator.serviceWorker.register('sw.js').catch(() => {});</script>
+</body>
+</html>
