@@ -1,5 +1,5 @@
 // Sendefieber – Offline-Cache (Version bei jedem Release erhöhen)
-const CACHE = 'sendefieber-v1';
+const CACHE = 'sendefieber-v2';
 const FILES = ['./', 'index.html', 'style.css', 'manifest.json', 'icon-192.png', 'icon-512.png',
   'js/main.js', 'js/sim.js', 'js/gfx.js', 'js/data.js'];
 self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())));

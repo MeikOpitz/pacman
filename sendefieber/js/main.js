@@ -1,7 +1,7 @@
 // Sendefieber – Oberfläche & Spielschleife
 import * as S from './sim.js';
 import { SLOTS, GENRES, TRANSMITTERS, RIVALS, TIPS } from './data.js';
-import { Scene, ROOMS, NPCS, drawPortrait, W, H } from './gfx.js';
+import { Scene, NPCS, W } from './gfx.js';
 
 const $ = s => document.querySelector(s);
 const SAVE = 'sendefieber-save-v1';
@@ -86,7 +86,7 @@ function intro() {
     <p><b>1.</b> Tippe auf <b>DEIN BUERO</b> und plane das Programm.<br>
     <b>2.</b> Hol dir bei <b>WERBUNG</b> Verträge und lege die Spots in den Plan.<br>
     <b>3.</b> Kaufe bei <b>PROGRAMME</b> bessere Sendungen.</p>
-    <p class="muted">Die Uhr läuft, auch während du durchs Haus läufst. Oben rechts: Pause / Normal / Schnell.</p>`,
+    <p class="muted"><b>Wischen</b> scrollt durchs Hochhaus, <b>Tippen</b> auf einen Raum schickt dich hin. Die Uhr läuft, auch während du durchs Haus läufst. Oben rechts: Pause / Normal / Schnell.</p>`,
   [{ label: 'An die Arbeit!', cls: 'go', fn: () => setSpeed(1) }]);
 }
 function start(state) {
@@ -156,9 +156,9 @@ function renderRoom() {
   if (!room) return;
   const npc = NPCS[room], scroll = roomEl.querySelector('.r-body')?.scrollTop || 0;
   const sayTxt = room === 'boss' ? S.bossLine(st) : GREET[room];
-  roomEl.innerHTML = `<div class="r-head"><canvas width="24" height="24"></canvas><div><div class="who">${npc.name}</div><div class="say">${sayTxt}</div></div></div>
+  roomEl.innerHTML = `<div class="r-head"><canvas width="72" height="64"></canvas><div><div class="who">${npc.name}</div><div class="say">${sayTxt}</div></div></div>
     <div class="r-body">${VIEW[room]()}</div><div class="r-foot"><button data-a="leave">◀ Raum verlassen</button></div>`;
-  drawPortrait(roomEl.querySelector('canvas'), room);
+  scene.drawBanner(roomEl.querySelector('canvas'), room, st);
   roomEl.hidden = false;
   roomEl.querySelector('.r-body').scrollTop = scroll;
 }
@@ -301,13 +301,31 @@ roomEl.addEventListener('click', e => {
 });
 
 // ---------- Eingabe ----------
-$('#scene').addEventListener('pointerdown', e => {
+// Tippen = Raum ansteuern, Wischen = Haus hoch/runter scrollen
+const cvEl = $('#scene');
+let drag = null;
+const viewScale = () => { const rc = cvEl.getBoundingClientRect(); return { rc, sc: Math.min(rc.width / W, rc.height / cvEl.height) }; };
+// Bildhöhe an den Bildschirm anpassen, damit kein Rand bleibt
+function fit() { const rc = $('#stage').getBoundingClientRect(); if (rc.width > 0) cvEl.height = Math.max(340, Math.min(560, Math.round(W * rc.height / rc.width))); }
+window.addEventListener('resize', fit); fit();
+cvEl.addEventListener('pointerdown', e => {
   if (!st || modalOpen || room) return;
-  const cv = e.currentTarget, rc = cv.getBoundingClientRect();
-  const sc = Math.min(rc.width / W, rc.height / H), ox = (rc.width - W * sc) / 2, oy = (rc.height - H * sc) / 2;
+  drag = { y: e.clientY, last: e.clientY, moved: false };
+  try { cvEl.setPointerCapture(e.pointerId); } catch (err) { /* egal */ }
+});
+cvEl.addEventListener('pointermove', e => {
+  if (!drag) return;
+  if (!drag.moved && Math.abs(e.clientY - drag.y) > 8) drag.moved = true;
+  if (drag.moved) { scene.pan(-(e.clientY - drag.last) / viewScale().sc); drag.last = e.clientY; }
+});
+cvEl.addEventListener('pointerup', e => {
+  const d = drag; drag = null;
+  if (!d || d.moved || !st || modalOpen || room) return;
+  const { rc, sc } = viewScale(), ox = (rc.width - W * sc) / 2, oy = (rc.height - cvEl.height * sc) / 2;
   const r = scene.roomAt((e.clientX - rc.left - ox) / sc, (e.clientY - rc.top - oy) / sc);
   if (r) { ffwd = false; scene.goTo(r, openRoom); hud(); }
 });
+cvEl.addEventListener('pointercancel', () => { drag = null; });
 $('#hud').addEventListener('click', e => {
   const b = e.target.closest('[data-speed]'); if (!b || !st || modalOpen || st.over) return;
   ffwd = false; setSpeed(+b.dataset.speed); sfx.click();
